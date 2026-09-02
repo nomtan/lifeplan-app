@@ -1,0 +1,11 @@
+{
+  "name": "lifeplan-app",
+  "private": true,
+  "packageManager": "pnpm@10.15.0",
+  "scripts": {
+    "dev:web": "pnpm --filter @lifeplan/web dev",
+    "dev:mobile": "pnpm --filter @lifeplan/mobile start",
+    "dev:api": "pnpm --filter @lifeplan/api dev",
+    "typecheck": "pnpm -r typecheck"
+  }
+}
