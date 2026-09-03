@@ -5,7 +5,7 @@ export interface SendEmailBinding {
     subject: string;
     html?: string;
     text?: string;
-  }): Promise<unknown>;
+  }): Promise<{ messageId: string }>;
 }
 
 export interface Env {
