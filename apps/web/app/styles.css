@@ -142,3 +142,23 @@ h1 { font-size: clamp(32px, 5vw, 56px); letter-spacing: -0.04em; margin: 0; }
   font-weight: 700;
   text-decoration: none;
 }
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.userEmail {
+  color: #71717a;
+  font-size: 13px;
+}
+
+@media (max-width: 760px) {
+  .headerActions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
