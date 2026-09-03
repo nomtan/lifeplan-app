@@ -1,6 +1,6 @@
 # Better Auth 認証実装仕様
 
-最終更新: 2026-09-03
+最終更新: 2026-09-04
 
 ## 1. 採用構成
 
@@ -73,7 +73,7 @@ Better Authのメール認証機能を使用する。
 
 ## 5. Cloudflare Email Service
 
-本番ではWorkersの `EMAIL` bindingを使用する。
+本番ではWorkersの `EMAIL` bindingを使用する。送信用サブドメインは `mail.nmtng.com`、初期送信元は `noreply@mail.nmtng.com` とする。
 
 送信対象:
 
@@ -155,8 +155,8 @@ Cloudflare側で以下を実施する。
 3. Better Authの認証テーブルをD1へ作成
 4. アプリ固有マイグレーションを適用
 5. Email Serviceを有効化
-6. 送信ドメインを設定
-7. Workerへ `EMAIL` bindingを設定
+6. 送信ドメイン `mail.nmtng.com` を設定
+7. Workerへ `EMAIL` bindingを設定（実装済み）
 8. Better Auth secretをWorker secretとして登録
 9. Google / Apple OAuth credentialsを登録
 10. 本番URLをtrusted originsへ設定
