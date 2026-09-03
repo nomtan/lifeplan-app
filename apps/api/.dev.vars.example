@@ -2,7 +2,7 @@ BETTER_AUTH_SECRET=replace-with-a-long-random-secret
 BETTER_AUTH_URL=http://localhost:8787
 WEB_ORIGIN=http://localhost:3000
 MOBILE_SCHEME=lifeplan://
-AUTH_EMAIL_FROM=noreply@example.com
+AUTH_EMAIL_FROM=noreply@mail.nmtng.com
 
 # Optional until OAuth credentials are prepared
 GOOGLE_CLIENT_ID=
