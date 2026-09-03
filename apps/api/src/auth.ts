@@ -38,6 +38,14 @@ export function createAuth(env: Env) {
     emailAndPassword: {
       enabled: true,
       requireEmailVerification: true,
+      sendResetPassword: async ({ user, url }) => {
+        await sendAuthMail(env, {
+          to: user.email,
+          subject: "パスワードを再設定してください",
+          actionLabel: "パスワードを再設定する",
+          url,
+        });
+      },
     },
     emailVerification: {
       sendOnSignUp: true,
