@@ -5,5 +5,14 @@
   "compatibility_date": "2026-09-01",
   "compatibility_flags": [
     "nodejs_compat"
-  ]
+  ],
+  "send_email": [
+    {
+      "name": "EMAIL"
+    }
+  ],
+  "vars": {
+    "AUTH_EMAIL_FROM": "noreply@mail.nmtng.com",
+    "MOBILE_SCHEME": "lifeplan://"
+  }
 }

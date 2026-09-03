@@ -8,7 +8,7 @@ type AuthMail = {
 };
 
 export async function sendAuthMail(env: Env, mail: AuthMail) {
-  const from = env.AUTH_EMAIL_FROM ?? "noreply@example.invalid";
+  const from = env.AUTH_EMAIL_FROM ?? "noreply@mail.nmtng.com";
 
   if (!env.EMAIL) {
     console.info("[auth-email:local]", {
