@@ -1,15 +1,25 @@
 "use client";
 
-import { FormEvent, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { FormEvent, useEffect, useState } from "react";
 import { authClient } from "../../../lib/auth-client";
 
 export default function ResetPasswordPage() {
-  const params = useSearchParams();
-  const token = params.get("token") ?? "";
+  const [token, setToken] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
   const [pending, setPending] = useState(false);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const error = params.get("error");
+    const nextToken = params.get("token") ?? "";
+
+    setToken(nextToken);
+
+    if (error) {
+      setMessage("再設定リンクが無効または期限切れです。");
+    }
+  }, []);
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
