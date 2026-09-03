@@ -1,0 +1,56 @@
+import { expo } from "@better-auth/expo";
+import { betterAuth } from "better-auth";
+import { sendAuthMail } from "./email";
+import type { Env } from "./env";
+
+export function createAuth(env: Env) {
+  const trustedOrigins = [
+    env.WEB_ORIGIN,
+    env.MOBILE_SCHEME ?? "lifeplan://",
+    "https://appleid.apple.com",
+  ];
+
+  const socialProviders = {
+    ...(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET
+      ? {
+          google: {
+            clientId: env.GOOGLE_CLIENT_ID,
+            clientSecret: env.GOOGLE_CLIENT_SECRET,
+          },
+        }
+      : {}),
+    ...(env.APPLE_CLIENT_ID && env.APPLE_CLIENT_SECRET
+      ? {
+          apple: {
+            clientId: env.APPLE_CLIENT_ID,
+            clientSecret: env.APPLE_CLIENT_SECRET,
+            appBundleIdentifier: env.APPLE_APP_BUNDLE_IDENTIFIER,
+          },
+        }
+      : {}),
+  };
+
+  return betterAuth({
+    database: env.DB,
+    secret: env.BETTER_AUTH_SECRET,
+    baseURL: env.BETTER_AUTH_URL,
+    trustedOrigins,
+    emailAndPassword: {
+      enabled: true,
+      requireEmailVerification: true,
+    },
+    emailVerification: {
+      sendOnSignUp: true,
+      sendVerificationEmail: async ({ user, url }) => {
+        await sendAuthMail(env, {
+          to: user.email,
+          subject: "メールアドレスを確認してください",
+          actionLabel: "メールアドレスを確認する",
+          url,
+        });
+      },
+    },
+    socialProviders,
+    plugins: [expo()],
+  });
+}
