@@ -10,7 +10,7 @@
 - Database: Cloudflare D1
 - Package manager: pnpm
 - Shared domain/simulation: `packages/domain`
-- Auth: Clerk（導入予定）
+- Auth: Better Auth
 
 ## Monorepo
 
@@ -88,10 +88,60 @@ Cloudflare側のD1 database / bindingはまだ未設定です。設定後にwran
 ## Next
 
 1. D1 binding / repository layer
-2. Clerk認証
+2. Better Auth認証
 3. プランCRUD
 4. 月次シミュレーションエンジン拡張
 5. 年表UI
 6. プラン単体グラフ
 7. 全プラン比較グラフ
 8. 実績入力
+
+
+## Better Auth
+
+認証基盤はBetter Authを採用しています。
+
+構成:
+
+- Better Auth
+- Hono / Cloudflare Workers
+- Cloudflare D1
+- Cloudflare Email Service
+- Googleログイン
+- Appleログイン
+- メールアドレス + パスワード
+
+認証APIは以下へマウントします。
+
+```
+/api/auth/*
+```
+
+Cloudflare側のD1・Email Serviceが未作成でもコード実装は進められます。
+メールbindingが存在しないローカル環境では、認証メールのURLをコンソールへ出力します。
+
+### 環境変数
+
+`apps/api/.dev.vars.example` を `.dev.vars` にコピーし、ローカル値を設定します。
+
+ウェブ:
+
+```
+apps/web/.env.example
+```
+
+モバイル:
+
+```
+apps/mobile/.env.example
+```
+
+### Cloudflare準備後に行うこと
+
+1. D1 databaseを作成
+2. Workerへ `DB` bindingを設定
+3. Better Authのcore schemaをD1へ適用
+4. Email Serviceを有効化
+5. Workerへ `EMAIL` send_email bindingを設定
+6. `AUTH_EMAIL_FROM` に認証済み送信元を設定
+7. Google / Apple OAuth credentialsを設定
