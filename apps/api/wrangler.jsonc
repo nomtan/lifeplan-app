@@ -14,5 +14,12 @@
   "vars": {
     "AUTH_EMAIL_FROM": "noreply@mail.nmtng.com",
     "MOBILE_SCHEME": "lifeplan://"
-  }
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "lifeplan-app",
+      "database_id": "3d7e5e58-dc82-4d3a-b0d8-ffeb52fd5faf"
+    }
+  ]
 }
