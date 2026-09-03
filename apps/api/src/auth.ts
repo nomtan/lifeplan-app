@@ -32,6 +32,9 @@ export function createAuth(env: Env, waitUntil?: (promise: Promise<unknown>) => 
 
   return betterAuth({
     database: env.DB,
+    account: {
+      identityStrategy: "provider-id",
+    },
     secret: env.BETTER_AUTH_SECRET,
     baseURL: env.BETTER_AUTH_URL,
     trustedOrigins,
