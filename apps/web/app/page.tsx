@@ -1,9 +1,30 @@
+"use client";
+
+import { useEffect } from "react";
+import { authClient } from "../lib/auth-client";
+
 const plans = [
   { name: "現在プラン", value: "4,820万円" },
   { name: "FIREプラン", value: "6,120万円" },
 ];
 
 export default function HomePage() {
+  const { data: session, isPending } = authClient.useSession();
+
+  useEffect(() => {
+    if (!isPending && !session) {
+      window.location.href = "/auth/sign-in";
+    }
+  }, [isPending, session]);
+
+  if (isPending || !session) {
+    return (
+      <main className="authShell">
+        <p>読み込み中…</p>
+      </main>
+    );
+  }
+
   return (
     <main className="shell">
       <header className="hero">
@@ -12,7 +33,19 @@ export default function HomePage() {
           <h1>人生のお金を、見える形に。</h1>
           <p className="lead">現在の資産とライフプランをまとめて確認できます。</p>
         </div>
-        <button className="primary">実績を入力</button>
+        <div className="headerActions">
+          <span className="userEmail">{session.user.email}</span>
+          <button
+            className="secondary"
+            onClick={async () => {
+              await authClient.signOut();
+              window.location.href = "/auth/sign-in";
+            }}
+          >
+            ログアウト
+          </button>
+          <button className="primary">実績を入力</button>
+        </div>
       </header>
 
       <section className="stats">
