@@ -118,15 +118,25 @@ Cloudflareを基本基盤とする。
 - Googleでログイン
 - メールアドレス
 
-認証基盤の第一候補:
+認証基盤:
 
-- Clerk
+- Better Auth
 
-ClerkはNext.js / Expo双方の公式SDKが存在するため、ウェブ・iOS・Androidを同じ認証基盤で管理する方向。
+Better AuthをCloudflare Workers / Hono上に組み込み、認証データはCloudflare D1で管理する。
 
-Expo側のネイティブ認証UIに依存せず、初期実装ではClerk SDKとアプリ独自UIを組み合わせることを基本候補とする。
+ウェブ・iOS・Androidは同じ認証基盤を利用する。Expo側ではBetter AuthのExpo連携を利用し、セッション情報は端末の安全なストレージへ保持する。
 
-最終採用は認証仕様確定時に決定する。
+メールアドレス登録ではメール認証を必須とする。認証メール・パスワード再設定メールなどのトランザクションメールはCloudflare Email Serviceから送信する。
+
+認証構成:
+
+- Better Auth: 認証・セッション管理
+- Cloudflare Workers / Hono: 認証API
+- Cloudflare D1: ユーザー・アカウント・セッション等の認証データ
+- Cloudflare Email Service: 認証メール・パスワード再設定メール
+- Googleログイン
+- Appleログイン
+- メールアドレス + パスワード
 
 ## 7. ライフプランの基本データ候補
 

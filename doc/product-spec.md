@@ -59,7 +59,7 @@ Cloudflareを中心に構成する。
 - 非同期処理: Cloudflare Queues
 - キャッシュ・一時データ: Cloudflare KV
 
-### 3.3 認証【検討中】
+### 3.3 認証【確定】
 
 認証方法:
 
@@ -67,9 +67,19 @@ Cloudflareを中心に構成する。
 - Googleログイン
 - メールアドレス
 
-認証基盤の第一候補はClerk。
+認証基盤はBetter Authを採用する。
 
-Next.jsとExpoの双方に公式SDKがあり、最小実用版（MVP）を早く構築しやすい。一方で、料金上限、Cloudflare Workersとのトークン検証、Appleログインの実機動作、将来の移行コストを事前に検証してから正式決定する。
+構成:
+
+- Better Auth: 認証・セッション管理
+- Cloudflare Workers / Hono: 認証API
+- Cloudflare D1: 認証データ保存
+- Cloudflare Email Service: メール認証・パスワード再設定などのメール配送
+- Googleログイン
+- Appleログイン
+- メールアドレス + パスワード
+
+ウェブ・iOS・Androidで同じ認証基盤を利用する。
 
 ## 4. 現時点のコア体験【検討中】
 
@@ -140,7 +150,7 @@ Next.jsとExpoの双方に公式SDKがあり、最小実用版（MVP）を早く
 - モノレポ構成
 - Webとモバイルの共有範囲
 - Cloudflareの具体的なサービス構成
-- Clerkの正式採用
+- Better Authの認証フロー詳細
 - データモデル
 - オフライン対応
 - 通知
