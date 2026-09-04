@@ -9,17 +9,21 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@lifeplan/domain": "workspace:*",
-    "expo": "^54.0.0",
-    "expo-status-bar": "~3.0.8",
-    "react": "19.1.0",
-    "react-native": "0.81.4",
-    "better-auth": "^1.6.0",
     "@better-auth/expo": "^1.6.0",
-    "expo-secure-store": "~15.0.7"
+    "@lifeplan/domain": "workspace:*",
+    "better-auth": "^1.6.0",
+    "expo": "^57.0.20",
+    "expo-constants": "~57.0.17",
+    "expo-linking": "~57.0.9",
+    "expo-network": "~57.0.1",
+    "expo-secure-store": "~57.0.3",
+    "expo-status-bar": "~57.0.1",
+    "expo-web-browser": "~57.0.2",
+    "react": "19.2.3",
+    "react-native": "0.86.3"
   },
   "devDependencies": {
     "@types/react": "^19.1.10",
-    "typescript": "^5.9.2"
+    "typescript": "^6.0.3"
   }
 }
