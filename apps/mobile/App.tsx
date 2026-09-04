@@ -12,6 +12,7 @@ import {
 import { authClient } from "./lib/auth-client";
 
 const tabs = ["ホーム", "プラン", "比較", "実績", "設定"];
+const mobileCallbackURL = "lifeplan://";
 
 function AuthScreen() {
   const [mode, setMode] = useState<"sign-in" | "sign-up">("sign-in");
@@ -25,12 +26,16 @@ function AuthScreen() {
 
     const result =
       mode === "sign-in"
-        ? await authClient.signIn.email({ email, password })
+        ? await authClient.signIn.email({
+            email,
+            password,
+            callbackURL: mobileCallbackURL,
+          })
         : await authClient.signUp.email({
             name,
             email,
             password,
-            callbackURL: "/",
+            callbackURL: mobileCallbackURL,
           });
 
     if (result.error) {
