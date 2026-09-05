@@ -1,3 +1,4 @@
+import type { Dispatch, SetStateAction } from "react";
 import { useState } from "react";
 import { Button, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { apiFetch } from "../lib/api";
@@ -179,7 +180,7 @@ function MoneyEditor({
 }: {
   title: string;
   items: MoneyItem[];
-  setItems: React.Dispatch<React.SetStateAction<MoneyItem[]>>;
+  setItems: Dispatch<SetStateAction<MoneyItem[]>>;
   addLabel: string;
 }) {
   return (
