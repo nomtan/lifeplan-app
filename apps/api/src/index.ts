@@ -23,11 +23,9 @@ app.get("/health", (c) =>
 
 app.use("/api/auth/*", async (c, next) => {
   const requestOrigin = c.req.header("Origin");
-  console.log("[auth-request]", {
-    method: c.req.method,
-    path: c.req.path,
-    origin: requestOrigin ?? null,
-  });
+  console.log(
+    `[auth-request] ${c.req.method} ${c.req.path} origin=${requestOrigin ?? "<none>"}`,
+  );
 
   return cors({
     origin: (origin) =>
