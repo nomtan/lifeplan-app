@@ -1,5 +1,7 @@
 PRAGMA foreign_keys = ON;
 
+ALTER TABLE profiles ADD COLUMN onboarding_completed_at TEXT;
+
 CREATE TABLE plan_incomes (
   id TEXT PRIMARY KEY,
   plan_id TEXT NOT NULL,
