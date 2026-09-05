@@ -9,6 +9,7 @@ import {
   TextInput,
   View,
 } from "react-native";
+import { BasicOnboarding } from "./components/BasicOnboarding";
 import { apiFetch } from "./lib/api";
 import { authClient } from "./lib/auth-client";
 
@@ -196,7 +197,7 @@ function ProfileOnboarding({
     <SafeAreaView style={styles.safe}>
       <StatusBar style="dark" />
       <ScrollView contentContainerStyle={styles.onboardingContent}>
-        <Text style={styles.kicker}>初期設定</Text>
+        <Text style={styles.kicker}>初期設定 1 / 4</Text>
         <Text style={styles.authTitle}>あなたの基本情報</Text>
         <Text style={styles.description}>
           ライフプランの年表を作るために、最初に基本情報を登録します。
@@ -292,12 +293,16 @@ export default function App() {
   const [profileLoading, setProfileLoading] = useState(false);
   const [profileLoaded, setProfileLoaded] = useState(false);
   const [profileError, setProfileError] = useState("");
+  const [onboardingCompleted, setOnboardingCompleted] = useState<boolean | null>(null);
+  const [onboardingError, setOnboardingError] = useState("");
 
   useEffect(() => {
     if (!session) {
       setProfile(null);
       setProfileLoaded(false);
       setProfileError("");
+      setOnboardingCompleted(null);
+      setOnboardingError("");
       return;
     }
 
@@ -331,6 +336,32 @@ export default function App() {
     };
   }, [session?.user.id]);
 
+  useEffect(() => {
+    if (!profile) {
+      setOnboardingCompleted(null);
+      return;
+    }
+
+    let cancelled = false;
+    setOnboardingError("");
+
+    apiFetch<{ completed: boolean }>("/api/onboarding")
+      .then((result) => {
+        if (!cancelled) setOnboardingCompleted(result.completed);
+      })
+      .catch((error) => {
+        if (!cancelled) {
+          setOnboardingError(
+            error instanceof Error ? error.message : "初期設定の取得に失敗しました。",
+          );
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [profile?.id]);
+
   if (isPending || profileLoading || (session && !profileLoaded)) {
     return (
       <SafeAreaView style={styles.safe}>
@@ -345,13 +376,13 @@ export default function App() {
     return <AuthScreen />;
   }
 
-  if (profileError) {
+  if (profileError || onboardingError) {
     return (
       <SafeAreaView style={styles.safe}>
         <View style={styles.authWrap}>
           <View style={styles.authCard}>
-            <Text style={styles.authTitle}>プロフィールを取得できませんでした</Text>
-            <Text style={styles.message}>{profileError}</Text>
+            <Text style={styles.authTitle}>データを取得できませんでした</Text>
+            <Text style={styles.message}>{profileError || onboardingError}</Text>
           </View>
         </View>
       </SafeAreaView>
@@ -365,6 +396,20 @@ export default function App() {
         onCompleted={(nextProfile) => setProfile(nextProfile)}
       />
     );
+  }
+
+  if (onboardingCompleted === null) {
+    return (
+      <SafeAreaView style={styles.safe}>
+        <View style={styles.center}>
+          <Text>初期設定を読み込み中…</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (!onboardingCompleted) {
+    return <BasicOnboarding onCompleted={() => setOnboardingCompleted(true)} />;
   }
 
   return <Dashboard profile={profile} />;
