@@ -13,6 +13,7 @@ import { authClient } from "./lib/auth-client";
 
 const tabs = ["ホーム", "プラン", "比較", "実績", "設定"];
 const mobileCallbackURL = "lifeplan://";
+const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function AuthScreen() {
   const [mode, setMode] = useState<"sign-in" | "sign-up">("sign-in");
@@ -24,16 +25,29 @@ function AuthScreen() {
   async function submit() {
     setMessage("");
 
+    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedName = name.trim();
+
+    if (!emailPattern.test(normalizedEmail)) {
+      setMessage("メールアドレスの形式を確認してください。");
+      return;
+    }
+
+    if (mode === "sign-up" && !normalizedName) {
+      setMessage("名前 / ニックネームを入力してください。");
+      return;
+    }
+
     const result =
       mode === "sign-in"
         ? await authClient.signIn.email({
-            email,
+            email: normalizedEmail,
             password,
             callbackURL: mobileCallbackURL,
           })
         : await authClient.signUp.email({
-            name,
-            email,
+            name: normalizedName,
+            email: normalizedEmail,
             password,
             callbackURL: mobileCallbackURL,
           });
@@ -44,6 +58,8 @@ function AuthScreen() {
     }
 
     if (mode === "sign-up") {
+      setEmail(normalizedEmail);
+      setName(normalizedName);
       setMessage("確認メールを送信しました。メール内のリンクを開いてください。");
     }
   }
@@ -69,6 +85,7 @@ function AuthScreen() {
 
           <TextInput
             autoCapitalize="none"
+            autoCorrect={false}
             keyboardType="email-address"
             placeholder="メールアドレス"
             style={styles.input}
