@@ -22,10 +22,12 @@ async function getSessionUserId(appEnv: Env, headers: Headers, waitUntil: (promi
   return session?.user.id ?? null;
 }
 
-async function getProfileId(env: Env, authUserId: string) {
-  return env.DB.prepare("SELECT id FROM profiles WHERE auth_user_id = ? LIMIT 1")
+async function getProfile(env: Env, authUserId: string) {
+  return env.DB.prepare(
+    "SELECT id, onboarding_completed_at FROM profiles WHERE auth_user_id = ? LIMIT 1",
+  )
     .bind(authUserId)
-    .first<{ id: string }>();
+    .first<{ id: string; onboarding_completed_at: string | null }>();
 }
 
 async function ensureDefaultPlan(env: Env, profileId: string) {
@@ -56,7 +58,7 @@ export function registerOnboardingRoutes(app: App) {
     );
     if (!authUserId) return c.json({ error: "UNAUTHORIZED" }, 401);
 
-    const profile = await getProfileId(c.env, authUserId);
+    const profile = await getProfile(c.env, authUserId);
     if (!profile) return c.json({ error: "PROFILE_REQUIRED" }, 409);
 
     const plan = await ensureDefaultPlan(c.env, profile.id);
@@ -83,6 +85,7 @@ export function registerOnboardingRoutes(app: App) {
     ]);
 
     return c.json({
+      completed: Boolean(profile.onboarding_completed_at),
       plan,
       familyMembers: families.results,
       incomes: incomes.results,
@@ -98,7 +101,7 @@ export function registerOnboardingRoutes(app: App) {
     );
     if (!authUserId) return c.json({ error: "UNAUTHORIZED" }, 401);
 
-    const profile = await getProfileId(c.env, authUserId);
+    const profile = await getProfile(c.env, authUserId);
     if (!profile) return c.json({ error: "PROFILE_REQUIRED" }, 409);
 
     const body = await c.req.json<{
@@ -158,10 +161,13 @@ export function registerOnboardingRoutes(app: App) {
            VALUES (?, ?, ?, ?)`,
         ).bind(crypto.randomUUID(), plan.id, item.name!.trim(), Number(item.monthlyAmount ?? 0)),
       ),
+      c.env.DB.prepare(
+        "UPDATE profiles SET onboarding_completed_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+      ).bind(profile.id),
     ];
 
     await c.env.DB.batch(statements);
 
-    return c.json({ ok: true, planId: plan.id });
+    return c.json({ ok: true, planId: plan.id, completed: true });
   });
 }
