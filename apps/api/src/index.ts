@@ -5,6 +5,15 @@ import type { Env } from "./env";
 
 const app = new Hono<{ Bindings: Env }>();
 
+function isAllowedAuthOrigin(origin: string | undefined, webOrigin: string) {
+  if (!origin) return false;
+  return (
+    origin === webOrigin ||
+    origin.startsWith("lifeplan://") ||
+    origin.startsWith("exp://")
+  );
+}
+
 app.get("/health", (c) =>
   c.json({
     ok: true,
@@ -13,10 +22,14 @@ app.get("/health", (c) =>
 );
 
 app.use("/api/auth/*", async (c, next) => {
-  const origin = c.env.WEB_ORIGIN;
+  const requestOrigin = c.req.header("Origin");
+  console.log(
+    `[auth-request] ${c.req.method} ${c.req.path} origin=${requestOrigin ?? "<none>"}`,
+  );
 
   return cors({
-    origin,
+    origin: (origin) =>
+      isAllowedAuthOrigin(origin, c.env.WEB_ORIGIN) ? origin : c.env.WEB_ORIGIN,
     credentials: true,
     allowHeaders: ["Content-Type", "Authorization"],
     allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],

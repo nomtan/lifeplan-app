@@ -3,12 +3,14 @@ import { betterAuth } from "better-auth";
 import { sendAuthMail } from "./email";
 import type { Env } from "./env";
 
+function isTrustedMobileOrigin(origin: string) {
+  return origin.startsWith("lifeplan://") || origin.startsWith("exp://");
+}
+
 export function createAuth(env: Env, waitUntil?: (promise: Promise<unknown>) => void) {
-  const trustedOrigins = [
+  const defaultTrustedOrigins = [
     env.WEB_ORIGIN,
     env.MOBILE_SCHEME ?? "lifeplan://",
-    "exp://",
-    "exp://**",
     "https://appleid.apple.com",
   ];
 
@@ -39,7 +41,16 @@ export function createAuth(env: Env, waitUntil?: (promise: Promise<unknown>) => 
     },
     secret: env.BETTER_AUTH_SECRET,
     baseURL: env.BETTER_AUTH_URL,
-    trustedOrigins,
+    trustedOrigins: async (request) => {
+      if (!request) return defaultTrustedOrigins;
+
+      const origin = request.headers.get("origin");
+      if (origin && isTrustedMobileOrigin(origin)) {
+        return [...defaultTrustedOrigins, origin];
+      }
+
+      return defaultTrustedOrigins;
+    },
     emailAndPassword: {
       enabled: true,
       requireEmailVerification: true,
