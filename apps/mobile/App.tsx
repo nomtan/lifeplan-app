@@ -1,5 +1,5 @@
 import { StatusBar } from "expo-status-bar";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Button,
   SafeAreaView,
@@ -9,11 +9,22 @@ import {
   TextInput,
   View,
 } from "react-native";
+import { apiFetch } from "./lib/api";
 import { authClient } from "./lib/auth-client";
 
 const tabs = ["ホーム", "プラン", "比較", "実績", "設定"];
 const mobileCallbackURL = "lifeplan://";
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+type Profile = {
+  id: string;
+  auth_user_id: string;
+  display_name: string;
+  birth_date: string;
+  life_expectancy: number;
+  created_at: string;
+  updated_at: string;
+};
 
 function AuthScreen() {
   const [mode, setMode] = useState<"sign-in" | "sign-up">("sign-in");
@@ -126,13 +137,121 @@ function AuthScreen() {
   );
 }
 
-function Dashboard() {
+function ProfileOnboarding({
+  initialName,
+  onCompleted,
+}: {
+  initialName: string;
+  onCompleted: (profile: Profile) => void;
+}) {
+  const [displayName, setDisplayName] = useState(initialName);
+  const [birthDate, setBirthDate] = useState("");
+  const [lifeExpectancy, setLifeExpectancy] = useState("90");
+  const [message, setMessage] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  async function submit() {
+    const normalizedName = displayName.trim();
+    const normalizedBirthDate = birthDate.trim();
+    const normalizedLifeExpectancy = Number(lifeExpectancy);
+
+    if (!normalizedName) {
+      setMessage("名前 / ニックネームを入力してください。");
+      return;
+    }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(normalizedBirthDate)) {
+      setMessage("生年月日は YYYY-MM-DD 形式で入力してください。");
+      return;
+    }
+    if (
+      !Number.isInteger(normalizedLifeExpectancy) ||
+      normalizedLifeExpectancy < 1 ||
+      normalizedLifeExpectancy > 120
+    ) {
+      setMessage("想定寿命は1〜120歳で入力してください。");
+      return;
+    }
+
+    setSaving(true);
+    setMessage("");
+
+    try {
+      const result = await apiFetch<{ profile: Profile }>("/api/profile", {
+        method: "POST",
+        body: JSON.stringify({
+          displayName: normalizedName,
+          birthDate: normalizedBirthDate,
+          lifeExpectancy: normalizedLifeExpectancy,
+        }),
+      });
+      onCompleted(result.profile);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "プロフィール登録に失敗しました。");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <SafeAreaView style={styles.safe}>
+      <StatusBar style="dark" />
+      <ScrollView contentContainerStyle={styles.onboardingContent}>
+        <Text style={styles.kicker}>初期設定</Text>
+        <Text style={styles.authTitle}>あなたの基本情報</Text>
+        <Text style={styles.description}>
+          ライフプランの年表を作るために、最初に基本情報を登録します。
+        </Text>
+
+        <View style={styles.authCard}>
+          <Text style={styles.fieldLabel}>名前 / ニックネーム</Text>
+          <TextInput
+            style={styles.input}
+            value={displayName}
+            onChangeText={setDisplayName}
+            placeholder="例: のむら"
+          />
+
+          <Text style={styles.fieldLabel}>生年月日</Text>
+          <TextInput
+            autoCapitalize="none"
+            autoCorrect={false}
+            keyboardType="numbers-and-punctuation"
+            style={styles.input}
+            value={birthDate}
+            onChangeText={setBirthDate}
+            placeholder="1985-04-01"
+          />
+
+          <Text style={styles.fieldLabel}>想定寿命</Text>
+          <TextInput
+            keyboardType="number-pad"
+            style={styles.input}
+            value={lifeExpectancy}
+            onChangeText={setLifeExpectancy}
+            placeholder="90"
+          />
+          <Text style={styles.helper}>後からいつでも変更できます。</Text>
+
+          {message ? <Text style={styles.message}>{message}</Text> : null}
+
+          <Button
+            title={saving ? "保存中…" : "保存して次へ"}
+            onPress={submit}
+            disabled={saving}
+          />
+        </View>
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
+function Dashboard({ profile }: { profile: Profile }) {
   return (
     <SafeAreaView style={styles.safe}>
       <StatusBar style="dark" />
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.kicker}>Lifeplan</Text>
-        <Text style={styles.title}>人生のお金を、見える形に。</Text>
+        <Text style={styles.title}>{profile.display_name}さんのライフプラン</Text>
 
         <View style={styles.grid}>
           {[
@@ -169,8 +288,50 @@ function Dashboard() {
 
 export default function App() {
   const { data: session, isPending } = authClient.useSession();
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [profileLoading, setProfileLoading] = useState(false);
+  const [profileLoaded, setProfileLoaded] = useState(false);
+  const [profileError, setProfileError] = useState("");
 
-  if (isPending) {
+  useEffect(() => {
+    if (!session) {
+      setProfile(null);
+      setProfileLoaded(false);
+      setProfileError("");
+      return;
+    }
+
+    let cancelled = false;
+    setProfileLoading(true);
+    setProfileError("");
+
+    apiFetch<{ profile: Profile | null }>("/api/profile")
+      .then((result) => {
+        if (!cancelled) {
+          setProfile(result.profile);
+          setProfileLoaded(true);
+        }
+      })
+      .catch((error) => {
+        if (!cancelled) {
+          setProfileError(
+            error instanceof Error ? error.message : "プロフィールの取得に失敗しました。",
+          );
+          setProfileLoaded(true);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setProfileLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [session?.user.id]);
+
+  if (isPending || profileLoading || (session && !profileLoaded)) {
     return (
       <SafeAreaView style={styles.safe}>
         <View style={styles.center}>
@@ -184,12 +345,35 @@ export default function App() {
     return <AuthScreen />;
   }
 
-  return <Dashboard />;
+  if (profileError) {
+    return (
+      <SafeAreaView style={styles.safe}>
+        <View style={styles.authWrap}>
+          <View style={styles.authCard}>
+            <Text style={styles.authTitle}>プロフィールを取得できませんでした</Text>
+            <Text style={styles.message}>{profileError}</Text>
+          </View>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <ProfileOnboarding
+        initialName={session.user.name ?? ""}
+        onCompleted={(nextProfile) => setProfile(nextProfile)}
+      />
+    );
+  }
+
+  return <Dashboard profile={profile} />;
 }
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: "#f7f7f8" },
   content: { padding: 20, paddingBottom: 110 },
+  onboardingContent: { padding: 20, paddingBottom: 40 },
   center: { flex: 1, alignItems: "center", justifyContent: "center" },
   kicker: { color: "#71717a", fontWeight: "700", marginBottom: 8 },
   title: {
@@ -198,6 +382,12 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     letterSpacing: -1.2,
     marginBottom: 24,
+  },
+  description: {
+    color: "#52525b",
+    fontSize: 15,
+    lineHeight: 22,
+    marginBottom: 20,
   },
   grid: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
   card: { width: "48%", backgroundColor: "#fff", borderRadius: 20, padding: 18 },
@@ -243,6 +433,11 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     marginBottom: 8,
   },
+  fieldLabel: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#3f3f46",
+  },
   input: {
     borderWidth: 1,
     borderColor: "#d4d4d8",
@@ -250,6 +445,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 13,
     fontSize: 16,
+  },
+  helper: {
+    color: "#71717a",
+    fontSize: 13,
+    marginTop: -6,
   },
   message: {
     color: "#52525b",
