@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { createAuth } from "./auth";
 import type { Env } from "./env";
+import { registerOnboardingRoutes } from "./onboarding";
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -118,6 +119,8 @@ app.post("/api/profile", async (c) => {
 
   return c.json({ profile });
 });
+
+registerOnboardingRoutes(app);
 
 app.all("/api/auth/*", (c) => {
   const auth = createAuth(c.env, (promise) => c.executionCtx.waitUntil(promise));
