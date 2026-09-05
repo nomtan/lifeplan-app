@@ -7,6 +7,8 @@ export function createAuth(env: Env, waitUntil?: (promise: Promise<unknown>) => 
   const trustedOrigins = [
     env.WEB_ORIGIN,
     env.MOBILE_SCHEME ?? "lifeplan://",
+    "exp://",
+    "exp://**",
     "https://appleid.apple.com",
   ];
 
